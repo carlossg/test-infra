@@ -982,7 +982,7 @@ func validateAgent(v JobBase) error {
 		return fmt.Errorf("job build_specs require agent: %s (found %q)", b, agent)
 	case agent == b && v.BuildSpec == nil:
 		return errors.New("knative-build jobs require a build_spec")
-	case v.DecorationConfig != nil && agent != k:
+	case v.DecorationConfig != nil && (agent != k && agent != b):
 		// TODO(fejta): support decoration
 		return fmt.Errorf("decoration requires agent: %s (found %q)", k, agent)
 	}

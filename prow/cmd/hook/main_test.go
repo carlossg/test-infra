@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"k8s.io/client-go/rest"
 	"testing"
 
 	"k8s.io/test-infra/prow/plugins"
@@ -28,4 +29,25 @@ func TestPlugins(t *testing.T) {
 	if err := pa.Load("../../plugins.yaml"); err != nil {
 		t.Fatalf("Could not load plugins: %v.", err)
 	}
+}
+func TestFoo(t *testing.T) {
+	configs := map[string]rest.Config{}
+	//var defCtx *string
+	//defCtx = new(string)
+
+	configs["default"] = rest.Config{Username: "foo"}
+	context := "default"
+
+	_, ok := configs[context]
+	if !ok {
+		t.Errorf("context not found: [%s]", context)
+	}
+
+	//logrus.Info("ok")
+	//configs := map[string]rest.Config{}
+	//var defCtx *string
+	//
+	//defCtx = new(string)
+	//
+	//configs[*defCtx] = *localCfg
 }

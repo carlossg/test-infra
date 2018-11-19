@@ -51,6 +51,7 @@ const (
 
 	// DefaultClusterAlias specifies the default cluster key to schedule jobs.
 	DefaultClusterAlias = "default"
+	DefaultContextAlias = "default"
 )
 
 // newClient is used to allow mocking out the behavior of 'NewClient' while testing.

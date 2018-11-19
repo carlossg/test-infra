@@ -96,8 +96,10 @@ func contextConfigs(kubeconfig string) (map[string]rest.Config, string, error) {
 	if localCfg, err := rest.InClusterConfig(); err != nil {
 		logrus.Warnf("Failed to create in-cluster config: %v", err)
 	} else {
-		defCtx = new(string)
-		configs[*defCtx] = *localCfg
+
+
+
+		configs["default"] = *localCfg
 	}
 
 	var loader clientcmd.ClientConfigLoader
@@ -129,7 +131,7 @@ func contextConfigs(kubeconfig string) (map[string]rest.Config, string, error) {
 	if len(configs) == 0 {
 		return nil, "", errors.New("no clients found")
 	}
-	return configs, *defCtx, nil
+	return configs, "default", nil
 }
 
 type buildConfig struct {

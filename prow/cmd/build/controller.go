@@ -112,6 +112,7 @@ func newController(kc kubernetes.Interface, pjc prowjobset.Interface, pji prowjo
 				logrus.Warnf("Ignoring bad prowjob add: %v", obj)
 				return
 			}
+			logrus.Info("adding")
 			c.enqueueKey(pj.Spec.Cluster, pj)
 		},
 		UpdateFunc: func(old, new interface{}) {
@@ -292,9 +293,9 @@ func reconcile(c reconciler, key string) error {
 		return fmt.Errorf("get prowjob: %v", err)
 	case pj.Spec.Agent != prowjobv1.KnativeBuildAgent:
 		// Do not want a build for this job
-	case pj.Spec.Cluster != ctx:
+	case pj.Spec.Context != ctx:
 		// Build is in wrong cluster, we do not want this build
-		logrus.Warnf("%s found in context %s not %s", key, ctx, pj.Spec.Cluster)
+		logrus.Warnf("%s found in context %s not %s", key, ctx, pj.Spec.Context)
 	case pj.DeletionTimestamp == nil:
 		wantBuild = true
 	}
@@ -506,53 +507,65 @@ func workDir(refs prowjobv1.Refs) buildv1alpha1.ArgumentSpec {
 //
 // Does nothing if the build spec predefines Source
 func injectSource(b *buildv1alpha1.Build, pj prowjobv1.ProwJob) error {
+	logrus.Info("1")
 	if b.Spec.Source != nil {
 		return nil
 	}
+	logrus.Info("2")
 	srcContainer, refs, cloneVolumes, err := decorate.CloneRefs(pj, codeMount, logMount)
 	if err != nil {
 		return fmt.Errorf("clone source error: %v", err)
 	}
+	logrus.Info("3")
 	if srcContainer == nil {
 		return nil
 	}
-
+	logrus.Info("4")
 	b.Spec.Source = &buildv1alpha1.SourceSpec{
 		Custom: srcContainer,
 	}
+	logrus.Info("5")
 	b.Spec.Volumes = append(b.Spec.Volumes, cloneVolumes...)
-
+	logrus.Info("6")
 	wd := workDir(refs[0])
 	// Inject correct working directory
 	for i := range b.Spec.Steps {
+		logrus.Info("7")
 		if b.Spec.Steps[i].WorkingDir != "" {
 			continue
 		}
 		b.Spec.Steps[i].WorkingDir = wd.Value
 	}
+	logrus.Info("8")
 	if b.Spec.Template != nil {
+		logrus.Info("9")
 		// Best we can do for a template is to set WORKDIR
 		b.Spec.Template.Arguments = append(b.Spec.Template.Arguments, wd)
 	}
-
+	logrus.Info("10")
 	return nil
 }
 
 // makeBuild creates a build from the prowjob, using the prowjob's buildspec.
 func makeBuild(pj prowjobv1.ProwJob, buildID string) (*buildv1alpha1.Build, error) {
+	logrus.Info("a")
 	if pj.Spec.BuildSpec == nil {
 		return nil, errors.New("nil BuildSpec")
 	}
+	logrus.Info("b")
 	b := buildv1alpha1.Build{
 		ObjectMeta: buildMeta(pj),
 		Spec:       *pj.Spec.BuildSpec,
 	}
+	logrus.Info("c")
 	rawEnv, err := buildEnv(pj, buildID)
 	if err != nil {
 		return nil, fmt.Errorf("environment error: %v", err)
 	}
+	logrus.Info("d")
 	injectEnvironment(&b, rawEnv)
+	logrus.Info("e")
 	err = injectSource(&b, pj)
-
+	logrus.Info("f")
 	return &b, nil
 }

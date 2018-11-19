@@ -268,30 +268,37 @@ func cookiefileVolume(secret string) (kube.Volume, kube.VolumeMount, string) {
 // The container may need to mount SSH keys and/or cookiefiles in order to access private refs.
 // CloneRefs returns a list of volumes containing these secrets required by the container.
 func CloneRefs(pj kube.ProwJob, codeMount, logMount kube.VolumeMount) (*kube.Container, []kube.Refs, []kube.Volume, error) {
+	logrus.Info("z1")
 	if pj.Spec.DecorationConfig == nil {
 		return nil, nil, nil, nil
 	}
+	logrus.Info("z2")
 	if skip := pj.Spec.DecorationConfig.SkipCloning; skip != nil && *skip {
 		return nil, nil, nil, nil
 	}
+	logrus.Info("z3")
 	var cloneVolumes []kube.Volume
 	var refs []kube.Refs // Do not return []*kube.Refs which we do not own
 	if pj.Spec.Refs != nil {
 		refs = append(refs, *pj.Spec.Refs)
 	}
+	logrus.Info("z4")
 	for _, r := range pj.Spec.ExtraRefs {
 		refs = append(refs, r)
 	}
+	logrus.Info("z5")
 	if len(refs) == 0 { // nothing to clone
 		return nil, nil, nil, nil
 	}
+	logrus.Info("z6")
 	if codeMount.Name == "" || codeMount.MountPath == "" {
 		return nil, nil, nil, fmt.Errorf("codeMount must set Name and MountPath")
 	}
+	logrus.Info("z7")
 	if logMount.Name == "" || logMount.MountPath == "" {
 		return nil, nil, nil, fmt.Errorf("logMount must set Name and MountPath")
 	}
-
+	logrus.Info("z8")
 	var cloneMounts []kube.VolumeMount
 	var sshKeyPaths []string
 	for _, secret := range pj.Spec.DecorationConfig.SSHKeySecrets {
@@ -300,18 +307,19 @@ func CloneRefs(pj kube.ProwJob, codeMount, logMount kube.VolumeMount) (*kube.Con
 		sshKeyPaths = append(sshKeyPaths, mount.MountPath)
 		cloneVolumes = append(cloneVolumes, volume)
 	}
-
+	logrus.Info("z9")
 	var cloneArgs []string
 	var cookiefilePath string
-
+	logrus.Info("z10")
 	if cp := pj.Spec.DecorationConfig.CookiefileSecret; cp != "" {
+		logrus.Info("z11")
 		v, vm, vp := cookiefileVolume(cp)
 		cloneMounts = append(cloneMounts, vm)
 		cloneVolumes = append(cloneVolumes, v)
 		cookiefilePath = vp
 		cloneArgs = append(cloneArgs, "--cookiefile="+cookiefilePath)
 	}
-
+	logrus.Info("z12")
 	env, err := cloneEnv(clonerefs.Options{
 		CookiePath:       cookiefilePath,
 		GitRefs:          refs,
@@ -322,10 +330,11 @@ func CloneRefs(pj kube.ProwJob, codeMount, logMount kube.VolumeMount) (*kube.Con
 		Log:              CloneLogPath(logMount),
 		SrcRoot:          codeMount.MountPath,
 	})
+	logrus.Info("z13")
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("clone env: %v", err)
 	}
-
+	logrus.Info("z14")
 	container := kube.Container{
 		Name:         cloneRefsName,
 		Image:        pj.Spec.DecorationConfig.UtilityImages.CloneRefs,
@@ -334,6 +343,7 @@ func CloneRefs(pj kube.ProwJob, codeMount, logMount kube.VolumeMount) (*kube.Con
 		Env:          env,
 		VolumeMounts: append([]kube.VolumeMount{logMount, codeMount}, cloneMounts...),
 	}
+	logrus.Info("z15")
 	return &container, refs, cloneVolumes, nil
 }
 
